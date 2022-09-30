@@ -7,7 +7,7 @@ from src.losses import *
 from src.penalties import *
 from src.ip_solver import ip_solver
 from src.admm_solver import admm_solver
-from src.cgd_solver import cdg_solver
+from src.cgd_solver import cgd_solver
 
 
 class CovEst(BaseEstimator):
