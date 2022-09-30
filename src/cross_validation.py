@@ -28,16 +28,16 @@ GRID_COV = {'t': [0, 0.01, 0.05, 0.1, 0.125, 0.15, 0.2, 0.25, 0.3,
                   0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 1]}
 
 
-def naive_cv(clf, X, y, D = 0, n_cv = 5, grid=GRID1_SMALL):
-    if clf.family == 'normal':
+def naive_cv(clf, X, y, D = 0, n_cv = 5, grid=GRID1_SMALL, family='normal'):
+    if family == 'normal':
         gd_sr = GridSearchCV(clf(0, 0, 0, D, family='normal'),
                              param_grid=grid, scoring = 'neg_mean_squared_error',
                              cv=n_cv, n_jobs=-1)
-    elif clf.family == 'poisson':
+    elif family == 'poisson':
         gd_sr = GridSearchCV(clf(0, 0, 0, D, family='poisson'),
                              param_grid=grid, scoring = 'neg_mean_poisson_deviance',
                              cv=n_cv, n_jobs=-1)
-    elif clf.family == 'binomial':
+    elif family == 'binomial':
         gd_sr = GridSearchCV(clf(0, 0, 0, D, family='binomial'),
                                  param_grid=grid, scoring = 'f1',
                                  cv=n_cv, n_jobs=-1)
