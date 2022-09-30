@@ -270,11 +270,10 @@ class GTV(BaseEstimator):
 
     def l2_risk(self, beta_star):
         check_is_fitted(self, "beta")
-
         return cp.norm2(self.beta - beta_star).value
+
     def fit(self, X, y):
         n, p = X.shape
-
         beta1 = cp.Variable(p)
         prob1 = cp.Problem(cp.Minimize(loss_f2(X, y, beta1) + GTV_pen(beta1, self.l1, self.l2, self.l3, self.D)))
         prob1.solve()

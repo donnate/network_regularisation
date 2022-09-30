@@ -19,14 +19,6 @@ class CovEst(BaseEstimator):
         self.S = S_hat
         return self
 
-def cov_scorer(self, X):
-    S_hat = np.cov(X.T, bias = True)
-    return - np.linalg.norm(self.S - S_hat)
-
-
-def logit_scorer(self, X, y):
-    return -logit_loss(X,y, self.beta).value      #loglik
-
 
 class Estimator(BaseEstimator):
     def __init__(self, l1 = 0, l2 = 0, D = 0,
@@ -247,22 +239,7 @@ class ElasticNetEstimator(Estimator):
         return self
 
 
-
-class OUR_ADMM(estimator):
-    def fit(self, X, y):
-        self.beta = Gauss_ADMM(X, y, self.D, self.l1, self.l2)
-        return self
-class OUR_CGD(estimator):
-    def fit(self, X, y):
-        self.beta = CGD(X,y, self.D, self.l1, self.l2)
-        return self
-
-class OUR_IP(estimator):
-    def fit(self, X, y):
-        self.beta = IP(X,y, self.D, self.l1, self.l2)
-        return self
-
-class GTV(BaseEstimator):
+class GTVEstimator(BaseEstimator):
     def __init__(self, l1:float = 0, l2:float = 0,
                 l3 :float= 0, D = None, family:str = "normal"):
         self.l1 = l1
