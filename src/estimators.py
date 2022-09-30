@@ -13,6 +13,7 @@ from src.cgd_solver import cgd_solver
 class CovEst(BaseEstimator):
     def __init__(self, t = 0):
         self.t = t
+
     def fit(self, X):
         S_hat = np.cov(X.T, bias = True)
         S_hat[np.abs(S_hat) < self.t] = 0

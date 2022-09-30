@@ -2,7 +2,6 @@ import numpy as np
 import cvxpy as cp
 
 
-
 def lasso_penalty(beta, l1):
     return l1 * cp.norm1(beta)
 

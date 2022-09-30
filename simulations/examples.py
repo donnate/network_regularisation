@@ -44,25 +44,33 @@ class SmoothStair(Example):
         self.G = nx.grid_graph(dim=((len(self.y), 1)))
         self.n_nodes = nx.number_of_nodes(self.G)
         self.coordinates = {n : (k, 0) for k, n in enumerate(self.G.nodes)}
-        #self.incidence = np.asarray(incidence_matrix(self.G).T.todense())
+        self.incidence = np.asarray(nx.incidence_matrix(self.G).T.todense())
+
 
 class Toeplitz(Example):
     def __init__(self, a:float=3, p:int=4):
         self.y = np.exp(np.log(a) * np.abs(np.subtract.outer(range(p),
                         range(p))))
+        self.G = nx.complete_graph(y.shape[0])
+        self.n_nodes = nx.number_of_nodes(self.G)
+        self.coordinates = None#{n : (k, k) for k, n in enumerate(self.G.nodes)}
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
 
 
 class BarbellGraph(Example):
-    def __init__(self, m1, m2, start_value, height):
-            b = np.zeros(2 * m1 + m2)
-            b[0: m1] = start_value * np.ones(m1)
-            b[(m1 + m2):(2 * m1 + m2)] = (start_value + height) * np.ones(m1)
-            if m2 > 0:
-                c = m2+1
-                path = [height/2 + height/2 * np.sin(j * np.pi/c)
-                        for j in np.arange(-c/2 + 1, c/2, 1)]
-                path = [x + start_value for x in path]
-                b[m1 :(m1 + m2)] = np.array(path)
+    def __init__(self, length_chain, size_clique, start_value: float=0., height: float=1.):
+        self.G = nx.barbell_graph(size_clique, length_chain)
+        self.coordinates = None
+        self.n_nodes = nx.number_of_nodes(self.G)
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
+        self.y = start_value * np.ones(self.n_nodes)
+        self.y[(size_clique + length_chain):(2 * size_clique + length_chain)] = (start_value + height)
+        if length_chain > 0:
+            c = length_chain + 1
+            path = [height/2 + height/2 * np.sin(j * np.pi/c)
+                    for j in np.arange(-c/2 + 1, c/2, 1)]
+            path = [x + start_value for x in path]
+            self.y[size_clique :(size_clique + length_chain)] = path
 
 # def chain_incidence(p):
 #     return scipy.sparse.diags([np.ones(p), -np.ones(p-1)], [0, 1]).toarray()[0:p-1,:]
@@ -87,9 +95,10 @@ class Weighted(Example):
                     M[(2 * p - 1 - i)*i//2 + j - i - 1] = G_row * np.sqrt(abs(Psi[i, j]))
         self.y =  np.asarray(M[np.any(M != 0, axis = 1)])
 
-## Caution: may have bugs
+
 class Smooth2D(Example):
-    def __init__(self, side_len, disk_radi, period, height, start_value):
+    def __init__(self, side_len: int=30, disk_radi: float =3.,
+                 period: float=3., height: float=4., start_value: float=2):
         if side_len % 2 == 0:
             left_end = -(side_len//2) + 1
         else:
@@ -102,12 +111,10 @@ class Smooth2D(Example):
         ds = np.array([x + period/2 for x in ds])
         part = np.sin(np.pi*ds/period)
         self.y = np.array([height/2 * x + start_value + height/2 for x in part])
+        self.G = nx.grid_graph(dim=((len(x), len(y))))
+        self.coordinates = {n : n for k, n in enumerate(self.G.nodes)}
 
+    def plot_3d():
+        return
 
-class CompleteGraph(Example):
-    def __init__(self, side_len, disk_radi, period, height, start_value):
-        self.y = 0
-
-class KGrid(Example):
-    def __init__(self, side_len, disk_radi, period, height, start_value):
-        self.y = 0
+        

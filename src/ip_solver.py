@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import numpy as np
 from numpy import linalg as la
 ### Notice, use scipy.sparse.diags can cause dimension mismatch problems. Use only NumPy instead.

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import numpy as np
 import pywt
 from numpy import linalg as la
