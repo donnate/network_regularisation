@@ -22,11 +22,12 @@ class CovEst(BaseEstimator):
 
 
 class Estimator(BaseEstimator):
-    def __init__(self, l1 = 0, l2 = 0, D = 0,
-                 familiy:str = 'normal'):
+    def __init__(self, l1: float=0, l2: float=0, D=0,
+                 family: str='normal'):
         self.l1 = l1
         self.l2 = l2
         self.D = D
+        self.family = family
 
     def check_D(self):
         if self.D is None:
@@ -43,6 +44,9 @@ class Estimator(BaseEstimator):
         else:
             print("Not implemented yet")
             return
+
+    def family(self):
+        return(self.family)
 
     def score(self, X, y):
         check_is_fitted(self, "beta")
@@ -69,6 +73,7 @@ class NaiveEstimator(Estimator):
     def __init__(self, l1=0, l2=0, D=None, family='normal'):
         Estimator.__init__(self, l1=l1, l2=l2, D=D,
                                  family=family)
+
     def fit(self, X, y):
         n, p = X.shape
         beta1 = cp.Variable(p)
@@ -113,8 +118,10 @@ class LassoEstimator(Estimator):
 
 class FusedLassoEstimator(Estimator):
     def __init__(self, l1=0, l2=0, D=None, family='normal'):
-            Estimator.__init__(self, l1=l1, l2=l2, D=D,
-                                     family=family)
+        Estimator.__init__(self, l1=l1, l2=l2, D=D,
+                            family=family)
+
+
     def fit(self, X, y):
         n, p = X.shape
         beta1 = cp.Variable(p)
@@ -137,9 +144,9 @@ class FusedLassoEstimator(Estimator):
         return self
 
 
-class SmoothLassoEstimator(Estimator):
+class SmoothedLassoEstimator(Estimator):
     def __init__(self, l1=0, l2=0, D=None, family='binomial'):
-                Estimator.__init__(self, l1=l1, l2=l2, D=D,
+        Estimator.__init__(self, l1=l1, l2=l2, D=D,
                                          family=family)
     def fit(self, X, y):
         n, p = X.shape

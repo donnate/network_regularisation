@@ -2,7 +2,7 @@ import numpy as np
 import sklearn as sk
 from sklearn.model_selection import GridSearchCV
 
-from estimators import GTVEstimator, LassoEstimator
+from src.estimators import GTVEstimator, LassoEstimator
 
 GRID_LASSO = {'l1': [0,0.001, 0.01, 0.1, 0.25, 0.5, 1, 2, 3, 5,
                     7.5, 10, 12.5, 15, 20, 25, 30, 40, 50, 75, 100], 'l2':[0]}
@@ -29,16 +29,16 @@ GRID_COV = {'t': [0, 0.01, 0.05, 0.1, 0.125, 0.15, 0.2, 0.25, 0.3,
 
 
 def naive_cv(clf, X, y, D = 0, n_cv = 5, grid=GRID1_SMALL):
-    if family == 'normal':
-        gd_sr = GridSearchCV(clf(0, 0, 0, D, family=family),
+    if clf.family == 'normal':
+        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='normal'),
                              param_grid=grid, scoring = 'neg_mean_squared_error',
                              cv=n_cv, n_jobs=-1)
-    elif family == 'poisson':
-        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family=family),
+    elif clf.family == 'poisson':
+        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='poisson'),
                              param_grid=grid, scoring = 'neg_mean_poisson_deviance',
                              cv=n_cv, n_jobs=-1)
-    elif family == 'binomial':
-        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family=family),
+    elif clf.family == 'binomial':
+        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='binomial'),
                                  param_grid=grid, scoring = 'f1',
                                  cv=n_cv, n_jobs=-1)
     else:
@@ -50,15 +50,15 @@ def naive_cv(clf, X, y, D = 0, n_cv = 5, grid=GRID1_SMALL):
 
 def naive_cv_gtv(X,y, D = 0, n_cv = 5, grid=GRID_GTV, family='normal'):
     if family == 'normal':
-        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family=family),
+        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family='normal'),
                              param_grid=grid, scoring = 'neg_mean_squared_error',
                              cv=n_cv, n_jobs=-1)
     elif family == 'poisson':
-        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family=family),
+        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family='poisson'),
                              param_grid=grid, scoring = 'neg_mean_poisson_deviance',
                              cv=n_cv, n_jobs=-1)
     elif family == 'binomial':
-        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family=family),
+        gd_sr = GridSearchCV(GTVEstimator(0, 0, 0, D, family='binomial'),
                                  param_grid=grid, scoring = 'f1',
                                  cv=n_cv, n_jobs=-1)
     else:
@@ -70,15 +70,15 @@ def naive_cv_gtv(X,y, D = 0, n_cv = 5, grid=GRID_GTV, family='normal'):
 
 def naive_cv_lasso(X, y, D = 0, n_cv = 5, grid=GRID_LASSO, family='normal'):
     if family == 'normal':
-        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family=family),
+        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family='normal'),
                              param_grid=grid, scoring = 'neg_mean_squared_error',
                              cv=n_cv, n_jobs=-1)
     elif family == 'poisson':
-        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family=family),
+        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family='poisson'),
                              param_grid=grid, scoring = 'neg_mean_poisson_deviance',
                              cv=n_cv, n_jobs=-1)
     elif family == 'binomial':
-        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family=family),
+        gd_sr = GridSearchCV(LassoEstimator(0, 0, D, family='binomial'),
                                  param_grid=grid, scoring = 'f1',
                                  cv=n_cv, n_jobs=-1)
     else:
