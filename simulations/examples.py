@@ -10,28 +10,41 @@ class Example:
     def __init__(self):
         self.G = nx.Graph()
         self.n_nodes = nx.number_of_nodes(self.G)
+        self.coordinates = None
 
-    def draw_graph():
+    def plot_signal(self):
         plt.figure()
-        nx.draw(self.G)
+        plt.plot(range(len(self.y)), self.y)
         plt.show()
 
-    def plot_adjacency():
+    def draw_graph(self):
+        if self.coordinates is None:
+            plt.figure()
+            nx.draw(self.G)
+            plt.show()
+        else:
+            plt.figure()
+            nx.draw(self.G, pos = self.coordinates, node_size=3, node_color='r')
+            plt.show()
+
+    def plot_adjacency(self):
         return
 
 class SmoothStair(Example):
-    def __init__(self, slope_length:float=3, slope_height:float=3,
-                 step_length:int=4, start_value:float=0, n_repeat:int=10):
-         pattern = [slope_height/2  (1 +  * np.sin(j * np.pi/slope_length)
-                   for j in np.arange(-slope_length/2, slope_length/2, 1)] +
-                   step_length * [slope_height]
+    def __init__(self, slope_length: int=3, slope_height: float=3.,
+                 step_length: int=4, start_value: float=0.,
+                 n_repeat: int=10):
+
+        pattern = [slope_height/2  * (1 + np.sin(j * np.pi/slope_length))
+                   for j in np.arange(-slope_length/2, slope_length/2, 1)] + step_length * [slope_height]
         temp_y = []
         for i in range(n_repeat):
             temp_y += [x + slope_height*i for x in pattern]
         self.y =  np.array([x + start_value for x in temp_y][slope_length: ])
         self.G = nx.grid_graph(dim=((len(self.y), 1)))
-        self.incidence = np.asarray(incidence_matrix(self.G).T.todense())
-
+        self.n_nodes = nx.number_of_nodes(self.G)
+        self.coordinates = {n : (k, 0) for k, n in enumerate(self.G.nodes)}
+        #self.incidence = np.asarray(incidence_matrix(self.G).T.todense())
 
 class Toeplitz(Example):
     def __init__(self, a:float=3, p:int=4):
