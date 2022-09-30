@@ -12,4 +12,4 @@ def poisson_loss(x, y, beta):
 def logit_loss(x, y, beta):
     n = x.shape[0]
     loglik = cp.sum(cp.multiply(y, x @ beta) - cp.logistic(x @ beta))
-    return -loglik/n
+    return -loglik / n

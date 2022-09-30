@@ -5,9 +5,9 @@ from sklearn.utils.validation import check_is_fitted
 
 from losses import *
 from penalties import *
-from algorithm.IP_G import*
-from algorithm.CGD_G import*
-from algorithm.ADMM_G import*
+from ip_solver import ip_solver
+from admm_solver import admm_solver
+from cgd_solver import cdg_solver
 
 
 class CovEst(BaseEstimator):
@@ -173,8 +173,8 @@ class SmoothLassoEstimator(Estimator):
 
 class GenElasticNetEstimator(Estimator):
     def __init__(self, l1=0, l2=0, D=None, family='binomial'):
-                Estimator.__init__(self, l1=l1, l2=l2, D=D,
-                                         family=family)
+        Estimator.__init__(self, l1=l1, l2=l2, D=D,
+                           family=family)
     def fit(self, X, y):
         n, p = X.shape
         beta1 = cp.Variable(p)
@@ -199,29 +199,53 @@ class GenElasticNetEstimator(Estimator):
 
 
 class ElasticNetEstimator(Estimator):
-    def __init__(self, l1=0, l2=0, D=None, ):
-                Estimator.__init__(self, l1=l1, l2=l2, D=None,
+    def __init__(self, l1=0, l2=0, D=None, solver=None, mu=1.5,
+                 eps= 1e-4, max_it = 10000, rho = 1.0):
+        Estimator.__init__(self, l1=l1, l2=l2, D=None,
                                          family='binomial')
+        self.solver = solver
+        self.mu=1.5
+        self.eps=eps
+        self.max_it = max_it
+        self.rho = rho
+
     def fit(self, X, y):
         n, p = X.shape
-        beta1 = cp.Variable(p)
-        if self.family == 'binomial':
-            prob1 = cp.Problem(cp.Minimize(logit_loss(X, y, beta1) +
-                                           elasticnet_penalty(beta1, self.l1,
-                                           self.l2, self.D)))
-        elif self.family == 'poisson':
-            prob1 = cp.Problem(cp.Minimize(poisson_loss(X, y, beta1) +
-                                           elasticnet_penalty(beta1, self.l1,
-                                           self.l2, self.D)))
-        elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
-                                           elasticnet_penalty(beta1, self.l1,
-                                           self.l2, self.D)))
+        if self.solver is None or family != 'normal':
+            beta1 = cp.Variable(p)
+            if self.family == 'binomial':
+                prob1 = cp.Problem(cp.Minimize(logit_loss(X, y, beta1) +
+                                               elasticnet_penalty(beta1, self.l1,
+                                               self.l2, self.D)))
+            elif self.family == 'poisson':
+                prob1 = cp.Problem(cp.Minimize(poisson_loss(X, y, beta1) +
+                                               elasticnet_penalty(beta1, self.l1,
+                                               self.l2, self.D)))
+            elif self.family == 'normal':
+                    prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+                                                   elasticnet_penalty(beta1, self.l1,
+                                                   self.l2, self.D)))
+            else:
+                raise ValueError('Exponential family not implemented yet')
+            prob1.solve()
+            self.beta = beta1.value
+            return self
+        elif self.solver=='ip' and family== 'normal':
+            self.beta = ip_solver(X, y, self.D,  lambda1=self.l1,
+                                  lambda2=self.l2, mu=self.mu,
+                                  eps = self.eps, max_it = self.max_it)
+        elif self.solver=='admm' and family== 'normal':
+            self.beta = admm_solver(X, y, self.D, lambda1=self.l1,
+                                   lambda2=self.l2, rho = self.rho,
+                                   eps = self.eps, max_it = self.max_it)
+        elif self.solver=='cdg' and family== 'normal':
+            self.beta = cgd_solver(X, y, self.D, lambda1=self.l1,
+                                   lambda2=self.l2, eps = self.eps,
+                                   max_it = self.max_it)
         else:
-            raise ValueError('Exponential family not implemented yet')
-        prob1.solve()
-        self.beta = beta1.value
+            raise ValueError('Solver not implemented yet')
         return self
+
 
 
 class OUR_ADMM(estimator):

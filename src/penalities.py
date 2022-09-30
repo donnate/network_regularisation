@@ -1,10 +1,6 @@
 import numpy as np
 import cvxpy as cp
 
-
-def loss_f2(x, y, beta):
-    return cp.norm2(x @ beta - y)**2 / 2
-
 def lasso_penalty(beta, l1):
     return l1 * cp.norm1(beta)
 
