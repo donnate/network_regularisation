@@ -3,11 +3,11 @@ import cvxpy as cp
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
-from losses import *
-from penalties import *
-from ip_solver import ip_solver
-from admm_solver import admm_solver
-from cgd_solver import cdg_solver
+from src.losses import *
+from src.penalties import *
+from src.ip_solver import ip_solver
+from src.admm_solver import admm_solver
+from src.cgd_solver import cdg_solver
 
 
 class CovEst(BaseEstimator):
@@ -101,7 +101,7 @@ class LassoEstimator(Estimator):
                                            lasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n +
                                            lasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         else:
@@ -126,7 +126,7 @@ class FusedLassoEstimator(Estimator):
                                            fusedlasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n +
                                            fusedlasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         else:
@@ -152,7 +152,7 @@ class SmoothLassoEstimator(Estimator):
                                            smoothlasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n +
                                            smoothlasso_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         else:
@@ -179,7 +179,7 @@ class GenElasticNetEstimator(Estimator):
                                            ee_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n  +
                                            ee_penalty(beta1, self.l1,
                                            self.l2, self.D)))
         else:
@@ -214,7 +214,7 @@ class ElasticNetEstimator(Estimator):
                                                elasticnet_penalty(beta1, self.l1,
                                                self.l2, self.D)))
             elif self.family == 'normal':
-                    prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+                    prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n +
                                                    elasticnet_penalty(beta1, self.l1,
                                                    self.l2, self.D)))
             else:
@@ -273,7 +273,7 @@ class GTVEstimator(BaseEstimator):
                                            gtv_penalty(beta1, self.l1, self.l2,
                                            self.l3, self.D)))
         elif self.family == 'normal':
-            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n) +
+            prob1 = cp.Problem(cp.Minimize(l2_loss(X, y, beta1) / n  +
                                            gtv_penalty(beta1, self.l1, self.l2,
                                            self.l3, self.D)))
         else:
