@@ -44,7 +44,7 @@ def line_search(D, u, y, lambda1, mu1, mu2, t, d_u, d_mu1, d_mu2, a = 0.1, b = 0
     s_max = min(1, min(a1), min(b1))
     s = 0.99 * s_max
 
-    while np.all(f1 + s* d_u >=0) and np.all(f2 - s* d_u >=0):
+    while np.any(f1 + s* d_u >=0) and np.any(f2 - s* d_u >=0):
         s = b*s
 
     r_t_0 = residuals(D, u, y, lambda1, mu1, mu2, t)
