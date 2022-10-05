@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import sklearn as sk
 from sklearn.model_selection import GridSearchCV
 
@@ -30,15 +31,15 @@ GRID_COV = {'t': [0, 0.01, 0.05, 0.1, 0.125, 0.15, 0.2, 0.25, 0.3,
 
 def naive_cv(clf, X, y, D = 0, n_cv = 5, grid=GRID1_SMALL, family='normal'):
     if family == 'normal':
-        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='normal'),
+        gd_sr = GridSearchCV(clf(l1=0, l2=0, D=D, family='normal'),
                              param_grid=grid, scoring = 'neg_mean_squared_error',
                              cv=n_cv, n_jobs=-1)
     elif family == 'poisson':
-        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='poisson'),
+        gd_sr = GridSearchCV(clf(l1=0, l2=0, D=D, family='poisson'),
                              param_grid=grid, scoring = 'neg_mean_poisson_deviance',
                              cv=n_cv, n_jobs=-1)
     elif family == 'binomial':
-        gd_sr = GridSearchCV(clf(0, 0, 0, D, family='binomial'),
+        gd_sr = GridSearchCV(clf(l1=0, l2=0, D=D, family='binomial'),
                                  param_grid=grid, scoring = 'f1',
                                  cv=n_cv, n_jobs=-1)
     else:

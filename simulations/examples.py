@@ -52,7 +52,7 @@ class SmoothStair(Example):
         self.G = nx.grid_graph(dim=((len(self.beta_star), 1)))
         self.n_nodes = nx.number_of_nodes(self.G)
         self.coordinates = {n : (k, self.beta_star[k]) for k, n in enumerate(self.G.nodes)}
-        self.incidence = np.asarray(nx.incidence_matrix(self.G).T.todense())
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
         self.Psi = toeplitz_covariance(a, self.n_nodes)
 
 
@@ -65,6 +65,7 @@ class BarbellGraph(Example):
         self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
         self.beta_star = start_value * np.ones(self.n_nodes)
         self.beta_star[(size_clique + length_chain):(2 * size_clique + length_chain)] = (start_value + height)
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
         if length_chain > 0:
             c = length_chain + 1
             path = [height/2 + height/2 * np.sin(j * np.pi/c)
@@ -112,6 +113,7 @@ class Smooth2D(Example):
         part = np.sin(np.pi*ds/period)
         self.beta_star = np.array([height/2 * x + start_value + height/2 for x in part])
         self.G = nx.grid_graph(dim=((len(x), len(y))))
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
         self.coordinates = {n : n for k, n in enumerate(self.G.nodes)}
 
     def plot_3d():
