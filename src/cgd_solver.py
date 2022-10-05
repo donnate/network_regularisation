@@ -25,7 +25,7 @@ def cgd_solver(X, y, Gamma, lambda1, lambda2, eps = 1e-4, max_it = 50000):
         if n_iter >= max_it:
             #raise ValueError("Iterations exceed max_it")
             print("Iterations exceed max_it")
-            return beta
+            return X_til_pinv @ (y_v - Gamma_v.T @ u)
         for i in range(m):
             t = 1/Q[i,i] * (b[i] - np.dot(np.delete(Q[i], i), np.delete(u, i)))
 
