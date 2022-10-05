@@ -44,7 +44,7 @@ def line_search(D, u, y, lambda1, mu1, mu2, t, d_u, d_mu1, d_mu2, a = 0.1, b = 0
     s_max = min(1, min(a1), min(b1))
     s = 0.99 * s_max
 
-    while np.all(f1 + s* d_u >=0) and np.all(f2 - s* d_u >=0):
+    while np.any(f1 + s* d_u >=0) and np.any(f2 - s* d_u >=0):
         s = b*s
 
     r_t_0 = residuals(D, u, y, lambda1, mu1, mu2, t)
@@ -86,7 +86,7 @@ def ip_solver(X,y, Gamma, lambda1, lambda2, mu = 1.5, eps = 1e-4, max_it = 10000
     y_v = X_til @ X_til_pinv @ y_til
     Gamma_v = Gamma @ X_til_pinv
 
-    u = np.ones(m)
+    u = np.zeros(m)
     mu1 = 10*np.ones(m)
     mu2 = 10*np.ones(m)
 
@@ -99,7 +99,7 @@ def ip_solver(X,y, Gamma, lambda1, lambda2, mu = 1.5, eps = 1e-4, max_it = 10000
         if n_iter >= max_it:
             #raise ValueError("Iterations exceed max_it")
             print("Iterations exceed max_it")
-            return beta
+            return X_til_pinv @ (y_v - Gamma_v.T @ u)
 
         d_u, d_mu1, d_mu2 = directions(Gamma_v, u, y_v, lambda1, mu1, mu2, t)
         s = line_search(Gamma_v, u, y_v, lambda1, mu1, mu2, t, d_u, d_mu1, d_mu2)
