@@ -1,3 +1,8 @@
+library(roxygen2)
+library(pracma)
+library(roperators)
+library(gear)
+
 directions = function(D, u, y, lambda1, mu1, mu2, t1){
   m = dim(u)[1]
   f1 = matrix(u - lambda1 * rep(1, m), m, 1)
