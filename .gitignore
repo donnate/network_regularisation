@@ -3,3 +3,4 @@
 *.pyc
 .DS_Store
 experiments/1-D/1D noise levels 1.3.4.ipynb
+experiments/*
