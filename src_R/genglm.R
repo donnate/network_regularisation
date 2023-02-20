@@ -108,6 +108,7 @@ coef.genglm <- function(object){
   # }
 }
 
+
 cv.genglm <- function(x,
                       y,
                       D,
@@ -115,29 +116,34 @@ cv.genglm <- function(x,
                       family = c("gaussian","binomial","poisson"),
                       solver = c("ECOS", "IP", "ADMM", "CD"),
                       lambda1 = 10^seq(-3,2,1), lambda2 = 10^seq(-3,2,1),
-                      n_folds){
+                      n_folds=2){
   # lambda1 and lambda2 are lists of the candidate values for lambda1 and lambda2
-  
+  #model.cv = cv.genglm(X,y,D,family='gaussian',solver='CD')
+  print(c(family, solver))
   N <- nrow(x)
-  folds = createFolds(X,k=nfolds)
+  folds = createFolds(1:N,k=n_folds)
   
   lambdas = expand.grid(lambda1,lambda2)
   colnames(lambdas) = c('l1','l2')
   cv_scores = c()
   
-  for(i in nrow(lambdas)){
+  for(i in 1:nrow(lambdas)){
     l1 = lambdas[i,]$l1
     l2 = lambdas[i,]$l2
     
     fold_scores = c()
     for(fold in folds){
-      train_x = x[-unlist(fold)]
-      test_x = x[unlist(fold)]
+      train_x = x[-fold,]
+      test_x = x[fold,]
       
-      train_y = y[-unlist(fold)]
-      test_y = y[unlist(fold)]
+      train_y = matrix(y[-fold,])
+      test_y = matrix(y[fold,])
       
-      model = genglm(train_x,train_y,family,l1,l2,solver)
+      model = genglm(x=train_x, y=train_y,
+                     D=D,family=family,
+                     lambda1=l1,
+                     lambda2=l2, solver=solver,
+                     standardize = TRUE)
       fitted_y = predict.genglm(model, test_x,type="response")
       
       # if(type.measure == "deviance"){
@@ -145,7 +151,7 @@ cv.genglm <- function(x,
       # }
       fold_scores = c(fold_scores, mean((test_y-fitted_y)^2))
     }
-    cv_scores = c(cv_scores, mean(fold_scres))
+    cv_scores = c(cv_scores, mean(fold_scores))
   }
   
   lambda1.min = lambdas[which.min(cv_scores),]$l1
@@ -154,6 +160,8 @@ cv.genglm <- function(x,
   # lambda1.1se
   # lambda2.1se
   
-  
+  cv <- list(lambda1.min = lambda1.min, lambda2.min = lambda2.min, family = family, solver = solver)
+  attr(cv, "class") <- "cv.genglm"
+  cv
 }
 
