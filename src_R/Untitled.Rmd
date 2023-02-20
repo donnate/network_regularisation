@@ -1,3 +1,15 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
 setwd("~/Desktop/network_regularization/network_regularisation")
 
 source("src_R/cd_solver_R.R")
@@ -16,9 +28,9 @@ genglm <- function(x, y, D, family = c("gaussian", "binomial", "poisson"),
   
   n = nrow(x)
   p = ncol(x)
-  beta1 = Variable(p)
   
   if(family != "gaussian" || is.null(solver)){
+    beta1 = Variable(p)
     if(family == "binomial"){
         if (solver == "ECOS"){
           prob1 = Problem(Minimize(logit_loss(x, y, beta1)+gen_penalty(beta1,lambda1,lambda2,D)))
@@ -49,6 +61,7 @@ genglm <- function(x, y, D, family = c("gaussian", "binomial", "poisson"),
     #return(hat_beta)
   }
   else if (solver == "ECOS" && family == "gaussian"){
+      beta1 = Variable(p)
       prob1 = Problem(Minimize(l2_loss(x, y, beta1) + gen_penalty(beta1, lambda1,lambda2,D)))
       CVXR_solution <- solve(prob1)
       hat_beta  = CVXR_solution$getValue(beta1)
@@ -108,6 +121,95 @@ coef.genglm <- function(object){
   # }
 }
 
+```
+
+Testing folds_cv function
+
+```{r}
+N <- nrow(X)
+folds = createFolds(1:N,k=2)
+
+lambda1 = 10^seq(-3,2,1)
+lambda2 = 10^seq(-3,2,1)
+
+lambdas = expand.grid(lambda1,lambda2)
+colnames(lambdas) = c('l1','l2')
+
+l1 = lambdas[1,]$l1
+l2 = lambdas[1,]$l2
+
+fold = folds[1]
+
+```
+
+```{r}
+train_x = X[-unlist(fold),]
+test_x = X[unlist(fold),]
+
+train_y = matrix(y[-unlist(fold),])
+test_y = matrix(y[unlist(fold),])
+
+model = genglm(train_x,train_y,D,family='gaussian',l1,l2,solver='CD')
+fitted_y = predict.genglm(model, test_x,type="response")
+fold_score = mean((test_y-fitted_y)^2)
+```
+
+```{r}
+fold_score = folds_cv(fold,X,y,D,family='gaussian',l1,l2,solver='CD')
+```
+
+```{r}
+
+folds_cv = function(fold, x, y, D, family, l1, l2, solver){
+  train_x = x[-unlist(fold),]
+  test_x = x[unlist(fold),]
+  
+  train_y = matrix(y[-unlist(fold),])
+  test_y = matrix(y[unlist(fold),])
+  
+  model = genglm(train_x,train_y,D,family=family,l1,l2,solver=solver)
+  fitted_y = predict.genglm(model, test_x,type="response")
+  fold_score = mean((test_y-fitted_y)^2)
+  return(fold_score)
+}
+```
+
+```{r}
+param_cv = function(lambdas, x, y, D, family, solver){
+  l1 = lambdas[1,]$l1
+  l2 = lambdas[2,]$l2
+
+  folds_score = mean(unlist(lapply(folds, folds_cv, x=x, y=y, D=D, family=family, solver=solver, l1=l1, l2=l2)))
+  return(folds_score)
+}
+```
+
+```{r}
+vectorized.cv.genglm = function(x,
+                      y,
+                      D,
+                      type.measure = c("deviance","mean_squared_error"),
+                      family = c("gaussian","binomial","poisson"),
+                      solver = c("ECOS", "IP", "ADMM", "CD"),
+                      lambda1 = 10^seq(-3,2,1), lambda2 = 10^seq(-3,2,1),
+                      n_folds=10){
+  N <- nrow(x)
+  folds = createFolds(1:N,k=2)
+  
+  lambdas = expand.grid(lambda1,lambda2)
+  colnames(lambdas) = c('l1','l2')
+  cv_scores = apply(lambdas, param_cv, x=x,y=y,D=D,family=family,solver=solver)
+  
+  lambda1.min = lambdas[which.min(cv_scores),]$l1
+  lambda2.min = lambdas[which.min(cv_scores),]$l2
+  
+  cv <- list(lambda1.min = lambda1.min, lambda2.min = lambda2.min, family = family, solver = solver)
+  attr(cv, "class") <- "cv.genglm"
+  cv
+}
+```
+
+```{r}
 cv.genglm <- function(x,
                       y,
                       D,
@@ -115,29 +217,29 @@ cv.genglm <- function(x,
                       family = c("gaussian","binomial","poisson"),
                       solver = c("ECOS", "IP", "ADMM", "CD"),
                       lambda1 = 10^seq(-3,2,1), lambda2 = 10^seq(-3,2,1),
-                      n_folds){
+                      n_folds=10){
   # lambda1 and lambda2 are lists of the candidate values for lambda1 and lambda2
   
   N <- nrow(x)
-  folds = createFolds(X,k=nfolds)
+  folds = createFolds(1:N,k=n_folds)
   
   lambdas = expand.grid(lambda1,lambda2)
   colnames(lambdas) = c('l1','l2')
   cv_scores = c()
   
-  for(i in nrow(lambdas)){
+  for(i in 1:nrow(lambdas)){
     l1 = lambdas[i,]$l1
     l2 = lambdas[i,]$l2
     
     fold_scores = c()
     for(fold in folds){
-      train_x = x[-unlist(fold)]
-      test_x = x[unlist(fold)]
+      train_x = x[-fold,]
+      test_x = x[fold,]
       
-      train_y = y[-unlist(fold)]
-      test_y = y[unlist(fold)]
+      train_y = matrix(y[-fold,])
+      test_y = matrix(y[fold,])
       
-      model = genglm(train_x,train_y,family,l1,l2,solver)
+      model = genglm(train_x,train_y,D,family,l1,l2,solver)
       fitted_y = predict.genglm(model, test_x,type="response")
       
       # if(type.measure == "deviance"){
@@ -154,6 +256,76 @@ cv.genglm <- function(x,
   # lambda1.1se
   # lambda2.1se
   
-  
+  cv <- list(lambda1.min = lambda1.min, lambda2.min = lambda2.min, family = family, solver = solver)
+  attr(cv, "class") <- "cv.genglm"
+  cv
 }
+```
 
+Simulated data example
+
+```{r}
+library(pracma)
+library(roperators)
+library(MASS)
+
+cov_mat = function(n, a){
+  mat1 = exp(log(a) * toeplitz(seq(0, n-1)))
+  return(mat1)
+}
+```
+
+```{r}
+t = seq(5, 14, 1)
+increasing_part = 7.5 + 2.5*sin(pi*t/10 - pi)
+flat_part = rep(5, 10)
+beta = c(flat_part, increasing_part, 5 + flat_part)
+plot(beta)
+```
+
+```{r}
+2+2
+```
+
+```{r}
+n = 20
+p = 30
+set.seed(123)
+X = mvrnorm(n, mu = rep(0, p), Sigma = cov_mat(p, 0.8))
+y = X %*% beta + rnorm(n, mean = 0, sd = 1)
+```
+
+```{r}
+D = matrix(0, nrow = p, ncol = p)  
+diag(D) = 1
+diag(D[, -1]) = -1
+D = D[1:p-1, 1:p]
+```
+
+```{r}
+N <- nrow(X)
+folds = createFolds(1:N,k=2)
+
+fold = folds[[1]]
+train_x = X[-fold,]
+test_x = X[fold,]
+train_y = matrix(y[-fold,])
+test_y = matrix(y[fold,])
+```
+
+```{r}
+genglm(X,y,D,family="gaussian",solver="CD")
+```
+
+```{r}
+test = genglm(train_x,train_y,D,family='gaussian',solver='CD')
+```
+
+```{r}
+model = genglm(X,y,D,family="gaussian",solver="CD")
+plot(model$hat_beta)
+```
+
+```{r}
+model.cv = cv.genglm(X,y,D,family='gaussian',solver='CD')
+```

@@ -7,7 +7,7 @@ cgd_solver = function(X,y, D, lambda1, lambda2, eps = 1e-4, max_it = 10000){
   m = dim(D)[1]
   p = dim(D)[2]
   X_til = rbind(X, sqrt(2*lambda2)*D)
-  y_til = rbind(y, matrix(0, m, 1))
+  y_til = rbind(y, matrix(0, m, 1)) 
   X_til_pinv = pinv(X_til)
   y_v = X_til %*% (X_til_pinv %*% y_til)
   D_v = D %*% X_til_pinv
