@@ -33,15 +33,16 @@ plot(beta)
 ```
 
 ```{r}
-2+2
-```
-
-```{r}
 n = 20
 p = 30
 set.seed(123)
 X = mvrnorm(n, mu = rep(0, p), Sigma = cov_mat(p, 0.8))
 y = X %*% beta + rnorm(n, mean = 0, sd = 1)
+```
+
+```{r}
+newx = mvrnorm(10, mu = rep(0, p), Sigma = cov_mat(p, 0.8))
+newy = newx %*% beta + rnorm(10, mean = 0, sd = 1)
 ```
 
 ```{r}
@@ -51,22 +52,10 @@ diag(D[, -1]) = -1
 D = D[1:p-1, 1:p]
 ```
 
-```{r}
-
-N <- nrow(X)
-folds = createFolds(1:N,k=2)
-
-fold = folds[[1]]
-train_x = X[-fold,]
-test_x = X[fold,]
-train_y = matrix(y[-fold,])
-test_y = matrix(y[fold,])
-```
-
 
 
 ```{r}
-setwd("~/Dropbox/network_regularisation")
+setwd("~/Desktop/network_regularization/network_regularisation")
 
 source("src_R/cd_solver_R.R")
 source("src_R/ip_solver_R.R")
@@ -132,85 +121,74 @@ genglm <- function(x, y, D, family = c("gaussian", "binomial", "poisson"),
   fit
 }
 
+```
 
 
-predict.genglm <- function(object,newx,type=c("link","response"),exact=FALSE){
+
+```{r}
+predict.genglm <- function(object,newx,type=c("link","response"),s=c('lambda.min','lambda.1se'),
+                                                                     exact=FALSE){
   
   # gaussian: return fitted values
   # binomial: return linear predictors if type==link, return fitted probabilities if type==response
   # poisson: return linear predictors if type==link, return fitted mean if type==response
   
-  if(type == "link"){
-    return(newx %*% object$hat_beta)
-  }
-  else if(type == "response"){
-    if(object$family == "gaussian"){
+  if(class(object)=='genglm'){
+    if(type == "link"){
       return(newx %*% object$hat_beta)
     }
-    else if(object$family == "binomial"){
-      return(exp(newx %*% object$hat_beta)/(1+exp(newx %*% object$hat_beta)))
+    else if(type == "response"){
+      if(object$family == "gaussian"){
+        return(newx %*% object$hat_beta)
+      }
+      else if(object$family == "binomial"){
+        return(exp(newx %*% object$hat_beta)/(1+exp(newx %*% object$hat_beta)))
+      }
+      else if(object$family == "poisson"){
+        return(exp(newx %*% object$hat_beta))
+      }
     }
-    else if(object$family == "poisson"){
-      return(exp(newx %*% object$hat_beta))
+    return(NA)
+  }
+  else if(class(object)=='cv.genglm'){
+    if(s=='lambda.min'){
+      if(type == "link"){
+        return(newx %*% object$hat_beta.min)
+      }
+      else if(type == "response"){
+        if(object$family == "gaussian"){
+          return(newx %*% object$hat_beta.min)
+        }
+        else if(object$family == "binomial"){
+          return(exp(newx %*% object$hat_beta.min)/(1+exp(newx %*% object$hat_beta.min)))
+        }
+        else if(object$family == "poisson"){
+          return(exp(newx %*% object$hat_beta.min))
+        }
+      }
+      return(NA)
     }
   }
-  return(NA)
 }
+```
 
-coef.genglm <- function(object){
- return(object$hat_beta)
-  #in glmnet, calls predict(object,type='coefficients')
-  # a0=t(as.matrix(object$a0)) a0 is the sequence of intercepts for each of the lambdas tested
-  # rownames(a0)="(Intercept)"
-  # nbeta=methods::rbind2(a0,object$beta) combining intercepts and the betas
-  # if we want to use a lambda that is different from the one in the model fit, do linear interpolation
-  # if(!is.null(s)){
-  #   vnames=dimnames(nbeta)[[1]]
-  #   dimnames(nbeta)=list(NULL,NULL)
-  #   lambda=object$lambda
-  #   lamlist=lambda.interp(lambda,s)
-  #   
-  #   nbeta=nbeta[,lamlist$left,drop=FALSE]%*%Diagonal(x=lamlist$frac) +nbeta[,lamlist$right,drop=FALSE]%*%Diagonal(x=1-lamlist$frac)
-  #   namess=names(s)
-  #   if(is.null(namess))namess=paste0("s",seq(along=s))
-  #   dimnames(nbeta)=list(vnames,namess)
-  # }
+```{r}
+coef.genglm <- function(object, s=c('lambda.1se','lambda.min')){
+  if(class(object)=='genglm'){
+    print('hi1')
+    return(object$hat_beta)
+  }
+  else if(class(object)=='cv.genglm'){
+    if(s=='lambda.min'){
+      print('hi')
+      return(object$hat_beta.min)
+    }
+  }
 }
-
-```
-
-Testing folds_cv function
-
-```{r}
-N <- nrow(X)
-folds = createFolds(1:N,k=2)
-
-lambda1 = 10^seq(-3,2,1)
-lambda2 = 10^seq(-3,2,1)
-
-lambdas = expand.grid(lambda1,lambda2)
-colnames(lambdas) = c('l1','l2')
-
-l1 = lambdas[1,]$l1
-l2 = lambdas[1,]$l2
-
-fold = folds[[1]]
-
 ```
 
 ```{r}
-train_x = X[-fold,]
-test_x = X[fold,]
-
-train_y = matrix(y[-fold,])
-test_y = matrix(y[fold,])
-
-model = genglm(train_x,train_y,D,family='gaussian',l1,l2,solver='CD')
-fitted_y = predict.genglm(model, test_x,type="response")
-fold_score = mean((test_y-fitted_y)^2)
-```
-
-```{r}
+# returns mean squared error for one fold 
 
 folds_cv = function(fold, x, y, D, family, l1, l2, solver){
   train_x = x[-fold,]
@@ -227,14 +205,16 @@ folds_cv = function(fold, x, y, D, family, l1, l2, solver){
 ```
 
 ```{r}
-param_cv = function(lambdas, x, y, D, family, solver){
-  l1 = lambdas[1,]$l1
-  l2 = lambdas[2,]$l2
+# returns average mean squared error across folds for one lambda1 & lambda2 combination
+param_cv = function(lambda_row, x, y, D, folds, family, solver){
+  l1 = lambda_row[1]
+  l2 = lambda_row[2]
 
-  folds_score = mean(unlist(lapply(folds, folds_cv, x=x, y=y, D=D, family=family, solver=solver, l1=l1, l2=l2)))
-  return(folds_score)
+  param_score = mean(unlist(lapply(folds, folds_cv, x=x, y=y, D=D, family=family, solver=solver, l1=l1, l2=l2)))
+  return(param_score)
 }
 ```
+
 
 ```{r}
 vectorized.cv.genglm = function(x,
@@ -244,18 +224,28 @@ vectorized.cv.genglm = function(x,
                       family = c("gaussian","binomial","poisson"),
                       solver = c("ECOS", "IP", "ADMM", "CD"),
                       lambda1 = 10^seq(-3,2,1), lambda2 = 10^seq(-3,2,1),
-                      n_folds=10){
+                      n_folds=2){
   N <- nrow(x)
-  folds = createFolds(1:N,k=2)
+  folds = createFolds(1:N,k=n_folds)
   
   lambdas = expand.grid(lambda1,lambda2)
   colnames(lambdas) = c('l1','l2')
-  cv_scores = apply(lambdas, param_cv, x=x,y=y,D=D,family=family,solver=solver)
+  cv_scores = apply(lambdas, 1, param_cv, x=x,y=y,D=D,folds,family=family,solver=solver)
   
   lambda1.min = lambdas[which.min(cv_scores),]$l1
   lambda2.min = lambdas[which.min(cv_scores),]$l2
   
-  cv <- list(lambda1.min = lambda1.min, lambda2.min = lambda2.min, family = family, solver = solver)
+  model.min = genglm(x=x, y=y,
+                     D=D,family=family,
+                     lambda1=lambda1.min,
+                     lambda2=lambda2.min, solver=solver,
+                     standardize = TRUE)
+  hat_beta.min = model.min$hat_beta
+  
+  
+  cv <- list(lambda1.min = lambda1.min, lambda2.min = lambda2.min, 
+             family = family, solver = solver,
+             hat_beta.min = hat_beta.min)
   attr(cv, "class") <- "cv.genglm"
   cv
 }
@@ -320,18 +310,8 @@ cv.genglm <- function(x,
 ```
 
 
-```{r}
-fold_score = folds_cv(fold,X,y,D,family='gaussian',l1,l2,solver='CD')
-```
 
 
-```{r}
-genglm(X,y,D,family="gaussian",solver="CD")
-```
-
-```{r}
-test = genglm(train_x,train_y,D,family='gaussian',solver='CD')
-```
 
 ```{r}
 model = genglm(X,y,D,family="gaussian",solver="CD")
@@ -341,4 +321,34 @@ plot(model$hat_beta)
 ```{r}
 model.cv = cv.genglm(X,y,D,family='gaussian',solver='CD')
 ```
+
+```{r}
+model.vectorized.cv = vectorized.cv.genglm(X,y,D,family='gaussian',solver='CD')
+```
+
+```{r}
+coef.genglm(model.vectorized.cv, s='lambda.min')
+```
+
+```{r}
+predict.genglm(model.vectorized.cv,newx,type='response',s='lambda.min')
+```
+
+
+```{r}
+library(glmnet)
+```
+
+```{r}
+data(QuickStartExample)
+x <- QuickStartExample$x
+y <- QuickStartExample$y
+```
+
+
+```{r}
+fit <- cv.glmnet(x, y)
+```
+
+
 
