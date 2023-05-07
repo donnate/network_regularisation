@@ -11,6 +11,11 @@ library(roperators)
 library(MASS)
 library(caret)
 
+
+#' Summarize the genglm object
+#' @param object fitted genglm object
+#' @return residuals and coefficients of the fitted genglm object
+
 summary.genglm = function(object){
   return(list(residuals=summary(object$residuals),coefficients=object$hat_beta))
 }

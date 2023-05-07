@@ -10,13 +10,23 @@ library(roperators)
 library(MASS)
 library(caret)
 
+#' Create fitted genglm object
+#' @param formula formula for model
+#' @param data data matrix containing input matrix and response variable
+#' @param x input matrix
+#' @param y response variable
+#' @param D adjacency matrix 
+#' @param family distribution family
+#' @param lambda1 list of values for lambda 1
+#' @param lambda2 list of values for lambda 2
+#' @param solver 
+#' @return fitted genglm object
+
 genglm <- function(formula = NULL, data = NULL, x = NULL, y = NULL, 
                    D, family = c("gaussian", "binomial", "poisson"),
                    lambda1 = 1.,
                    lambda2 = 1.,
-                   standardize = TRUE,
-                   solver = c("ECOS", "IP", "ADMM", "CD"),
-                   intercept = TRUE){
+                   solver = c("ECOS", "IP", "ADMM", "CD")){
   
   if(!is.null(formula) & !is.null(data)){
     vars = all.vars(formula)

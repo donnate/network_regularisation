@@ -11,6 +11,10 @@ library(roperators)
 library(MASS)
 library(caret)
 
+#' Returns coefficients for genglm or cv.genglm object
+#' @param object fitted genglm or cv.genglm object
+#' @return coefficients
+
 coef.genglm <- function(object){
   if(class(object)=='genglm'){
     return(object$hat_beta)

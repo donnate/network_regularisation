@@ -13,7 +13,7 @@ library(roperators)
 library(MASS)
 library(caret)
 
-#' Cross-validation for genglm
+#' Does k-fold cross-validation for genglm
 #' @param formula formula for model
 #' @param data data matrix containing input matrix and response variable
 #' @param x input matrix
