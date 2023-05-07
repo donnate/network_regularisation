@@ -9,7 +9,6 @@ library(tidyverse)
 library(pracma)
 library(roperators)
 library(MASS)
-library(caret)
 
 #' Returns coefficients for genglm or cv.genglm object
 #' @param object fitted genglm or cv.genglm object

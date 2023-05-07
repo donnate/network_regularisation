@@ -9,7 +9,6 @@ library(tidyverse)
 library(pracma)
 library(roperators)
 library(MASS)
-library(caret)
 
 #' Helper function for cv.genglm function
 #' @param lambda_row lambda 1 and lambda 2

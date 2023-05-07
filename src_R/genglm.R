@@ -8,7 +8,6 @@ library(tidyverse)
 library(pracma)
 library(roperators)
 library(MASS)
-library(caret)
 
 #' Create fitted genglm object
 #' @param formula formula for model

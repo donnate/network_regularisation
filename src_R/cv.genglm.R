@@ -11,7 +11,6 @@ library(tidyverse)
 library(pracma)
 library(roperators)
 library(MASS)
-library(caret)
 
 #' Does k-fold cross-validation for genglm
 #' @param formula formula for model
