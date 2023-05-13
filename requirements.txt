@@ -1,0 +1,6 @@
+multiprocess
+numpy
+matplotlib
+pywavelets
+networkx
+scipy
