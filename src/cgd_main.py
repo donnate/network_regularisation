@@ -1,8 +1,4 @@
-from concurrent.futures import process
-from tracemalloc import start
-from turtle import st
-from unittest import result
-from multiprocess import Process, Queue
+from lib2to3.pgen2 import grammar
 import matplotlib.pyplot as plt
 from simulations.examples import SmoothStair, BarbellGraph, GeneralGraph
 import numpy as np
@@ -18,7 +14,7 @@ from multiprocessing import shared_memory, Process, Lock
 from multiprocessing import cpu_count, current_process
 from multiprocessing import Process, Value, Array
 import timeit
-from src.cgd_solver import cgd_solver, primal_dual_preprocessing, cgd_greedy_parallel
+from src.cgd_solver import cgd_solver, primal_dual_preprocessing, cgd_greedy_parallel, cgd_solver_greedy
 
 import time
 
@@ -64,16 +60,22 @@ if __name__ == "__main__":  # confirms that the code is under main function
     beta_normal = cgd_solver(dual_params, lambda1 = 5)
     end_time2 = timeit.default_timer()
 
+    start_time3 = timeit.default_timer()
+    beta_greedy = cgd_solver_greedy(dual_params, lambda1 = 5)
+    end_time3 = timeit.default_timer()
+
 
     #better tracking of process starting and finishing 
 
     #print("time_elapsed: ", end_time - start_time)
     #print(update_counter.value)
 
+    print('time_elapsed_greedy:', end_time3 - start_time3)
     print('time_elapsed_normal:' , end_time2 - start_time2)
-    print('time_elapsed_greedy:', end_time - start_time)
+    print('time_elapsed_parallel:', end_time - start_time)
     print("normed diff normal", la.norm(beta_normal - barbell.beta_star)/np.sqrt(len(beta_normal)))
-    print("normed diff greedy", la.norm(beta - barbell.beta_star)/np.sqrt(len(beta)))
+    print("normed diff parallel", la.norm(beta - barbell.beta_star)/np.sqrt(len(beta)))
+    print("normed diff greedy", la.norm(beta_greedy[0] - barbell.beta_star)/np.sqrt(len(beta_greedy[0])))
 
 
 

@@ -5,6 +5,9 @@ import pywt
 import random
 import time
 
+
+from sklearn.cluster import SpectralClustering
+
 from simulations.covariances import toeplitz_covariance
 
 
@@ -55,7 +58,30 @@ class SmoothStair(Example):
         self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
         self.Psi = toeplitz_covariance(a, self.n_nodes)
 
-
+class GeneralGraph(Example):
+    def __init__(self,G, length_chain, size_clique, start_value: float=0., height: float=1.,
+                nb_clusters=2, sigma_gen=0.3, signal_type ="tree"):
+        self.G = G
+        self.coordinates = None
+        self.n_nodes = nx.number_of_nodes(self.G)
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
+        self.beta_star = np.zeros(self.n_nodes)
+        #### Define what kind of signal we want
+        if signal_type == "piecewise_cnst":
+            ### Cluster the nodes
+            ### decrease sigma_gen for more smoothness
+            clustering = SpectralClustering(n_clusters=nb_clusters, assign_labels='discretize',random_state=0,
+                                           affinity='precomputed').fit(nx.adjacency_matrix(G))
+            for i in np.unique(clustering):
+                self.beta_star[np.where(clustering.labels_ == i)] = np.random.normal(loc=np.random.normal(loc=0.0, scale=sigma_gen))
+        else:
+            ### Find MST
+            T = nx.minimum_spanning_tree(G)
+            edges_T = nx.incidence_matrix(T)
+            #### generate edges differences:
+            edges_diff = np.random.normal(loc=0, scale=sigma_gen, size=edges_T.shape[1])
+            self.beta_star = np.linalg.pinv(edges_T.todense()).T.dot(edges_diff)
+        self.incidence = np.asarray(nx.incidence_matrix(self.G, oriented=True).T.todense())
 
 class BarbellGraph(Example):
     def __init__(self, length_chain, size_clique, start_value: float=0., height: float=1.):

@@ -25,7 +25,6 @@ def primal_dual_preprocessing(X, y, Gamma, lambda2):
 def cgd_solver(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000):
     
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
-
     u = np.zeros(m)
     n_iter = 0
     prev_u = 0 # For stopping criteria
@@ -50,6 +49,56 @@ def cgd_solver(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000):
 
     beta = X_til_pinv @ (y_v - Gamma_v.T @ u)
     return beta
+
+
+def project_op(vector, param): 
+    vector[vector > param] = param
+    vector[vector < -param] = -param
+    return vector
+
+def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
+
+    m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
+
+    u = np.zeros(m)
+    n_iter = 0
+    comps = 0
+    #print(m)
+    prev_u = 1 # For stopping criteria
+    gradient = -np.copy(Q.dot(np.ones(b.shape[0])-b))
+    while True:
+        n_iter += 1
+        if n_iter >= max_it:
+            #raise ValueError("Iterations exceed max_it")
+            print("Iterations exceed max_it")
+            return X_til_pinv @ (y_v - Gamma_v.T @ u), n_iter, comps
+        projected_gradient = u - project_op(u - gradient, lambda1)
+        #projected_gradient = project_op(u - gradient, lambda1)
+        greedy_coord = np.argmax(np.abs(projected_gradient))
+        i = greedy_coord
+        delta = min(max(u[i] - ((1/Q[i,i]) * -gradient[i]), -lambda1), lambda1) - u[i]
+        gradient += delta *Q[i]
+        u[i] += delta
+        
+        #add back well conditioned block...? 
+        print( "i is " + str(i))
+        print(delta)
+
+        #u[i] = np.sign(t) * min(np.abs(t), lambda1)   #there should be better truncation methods
+        if (la.norm(u - prev_u) <= eps) & (n_iter>10):
+            print("break reason 1")
+            break
+        
+        #print(gradient)
+        if la.norm(gradient) <= eps:
+            print("break reason gradient")
+            break
+
+        prev_u = np.copy(u)   # Recall array is similar to list
+        
+
+    beta = X_til_pinv @ (y_v - Gamma_v.T @ u)
+    return beta, n_iter, comps
 
 
 def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000): 
@@ -87,6 +136,8 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
 
     beta = X_til_pinv @ (y_v - Gamma_v.T @ np.array(u_arr[:]))
     return beta
+
+
 
 # ### Generate stair shape toy example
 

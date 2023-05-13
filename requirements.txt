@@ -4,3 +4,4 @@ matplotlib
 pywavelets
 networkx
 scipy
+scikit-learn
