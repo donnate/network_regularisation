@@ -1,4 +1,5 @@
 from lib2to3.pgen2 import grammar
+from math import gamma
 import matplotlib.pyplot as plt
 from simulations.examples import SmoothStair, BarbellGraph, GeneralGraph
 import numpy as np
@@ -14,7 +15,7 @@ from multiprocessing import shared_memory, Process, Lock
 from multiprocessing import cpu_count, current_process
 from multiprocessing import Process, Value, Array
 import timeit
-from src.cgd_solver import cgd_solver, primal_dual_preprocessing, cgd_greedy_parallel, cgd_solver_greedy
+from src.cgd_solver import cgd_solver, primal_dual_preprocessing, cgd_greedy_parallel, cgd_solver_greedy, cov_from_G
 
 import os
 
@@ -33,33 +34,50 @@ if __name__ == "__main__":  # confirms that the code is under main function
     G = nx.powerlaw_cluster_graph(n, m, p)
 
     #barbell = GeneralGraph(G, 60, 70)
-    barbell = BarbellGraph(length_chain = 80, size_clique = 80)
+    barbell = BarbellGraph(length_chain = 85, size_clique = 85)
 
-    X, y = gaussian_sample(5000, barbell.n_nodes, beta_star = barbell.beta_star, Psi = np.eye(barbell.n_nodes), sigma = 2)
+    cov_matrix = cov_from_G(barbell.G, 0.1)
+    p = barbell.n_nodes
+    sigma =1 
 
-    dual_params = primal_dual_preprocessing(X, y, barbell.incidence, lambda2 = 1)
 
-    '''
+    g_dagger = np.linalg.pinv(barbell.incidence)
+    g_dagger_norms = np.linalg.norm(g_dagger, axis = 0)
+    rho_gamma = np.max(g_dagger_norms)
+    
+    gamma_max_cov = np.max(np.linalg.eigh(cov_matrix)[0])
+
+
+    lambda1_opt = 32*sigma*rho_gamma*np.sqrt((gamma_max_cov * np.log(p))/barbell.n_nodes)
+
+    lambda2_opt = lambda1_opt/(16 * np.max(barbell.incidence@barbell.beta_star))
+    
+
+    X, y = gaussian_sample(p, barbell.n_nodes, beta_star = barbell.beta_star, Psi = cov_matrix, sigma = sigma)
+
+    dual_params = primal_dual_preprocessing(X, y, barbell.incidence, lambda2 = lambda2_opt)
+
     dual_params[2].shape
 
-    len(dual_params) 
 
-    c = np.random.rand(20000, 20000)
-    dual_params1 = (dual_params[0], dual_params[1], c ,dual_params[3], dual_params[4], dual_params[5])'''
+    
+
+
+
 
 
     start_time = timeit.default_timer()
-    beta = cgd_greedy_parallel(dual_params, lambda1 = 5, eps = 1e-5, max_it = 50000)
+    beta, read_time = cgd_greedy_parallel(dual_params, lambda1 = lambda1_opt, eps = 1e-5)
     end_time = timeit.default_timer()
+    print("read time", read_time)
 
     start_time2 = timeit.default_timer()
-    beta_normal = cgd_solver(dual_params, lambda1 = 5)
+    beta_normal = cgd_solver(dual_params, lambda1 = lambda1_opt)
     end_time2 = timeit.default_timer()
 
     start_time3 = timeit.default_timer()
-    beta_greedy = cgd_solver_greedy(dual_params, lambda1 = 5)
+    beta_greedy = cgd_solver_greedy(dual_params, lambda1 = lambda1_opt)
     end_time3 = timeit.default_timer()
-
 
     #better tracking of process starting and finishing 
 

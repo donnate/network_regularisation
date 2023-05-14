@@ -64,8 +64,6 @@ def compute_and_update(u_array, grad_array, Q, update_vals, epsilon, lambda1, in
         grad_array += delta*np.array(Q[i*width_Q: (i*width_Q) + width_Q]) #test lock speed here
         u_array[i] += delta
         update_vals.value +=1
-
-        print(update_vals.value)
         if abs(delta) <= epsilon:
             #print("break reason 1")
             update_vals.value = 0

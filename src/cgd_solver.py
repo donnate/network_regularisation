@@ -9,6 +9,7 @@ from multiprocessing import Process, Value, Array
 from src.parallel_fns import print_func, print_func2, test_fn, compute_update, add_one, f, compute_and_update
 import time
 import timeit
+import networkx as nx
 
 def primal_dual_preprocessing(X, y, Gamma, lambda2):
     m, p = Gamma.shape
@@ -23,8 +24,14 @@ def primal_dual_preprocessing(X, y, Gamma, lambda2):
 
     return (m, X_til_pinv, Q, b, y_v, Gamma_v)
 
+def cov_from_G(G, a): ### Covariance is inverse of L + a*I
+    L = nx.laplacian_matrix(G)
+    p = L.shape[0]
+    C = la.inv(L.todense() + a*np.identity(p))
+    return C
 
-def cgd_solver(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000):
+
+def cgd_solver(preprocessed_params, lambda1, eps = 1e-5, max_it = 5000000):
     
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
     u = np.zeros(m)
@@ -58,7 +65,7 @@ def project_op(vector, param):
     vector[vector < -param] = -param
     return vector
 
-def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
+def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 5000000):
 
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
 
@@ -83,8 +90,8 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
         u[i] += delta
         
         #add back well conditioned block...? 
-        print( "i is " + str(i))
-        print(delta)
+        #print( "i is " + str(i))
+        #print(delta)
 
         #u[i] = np.sign(t) * min(np.abs(t), lambda1)   #there should be better truncation methods
         if (la.norm(u - prev_u) <= eps) & (n_iter>10):
@@ -103,7 +110,7 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
     return beta, n_iter, comps
 
 
-def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000): 
+def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 5000000): 
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
 
     n_iter = 0
@@ -116,8 +123,9 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000
     grad_arr = Array('f', np.copy(-b))
     start_time = timeit.default_timer()
     Q_arr = Array('f', np.copy(Q.reshape(1, Q.shape[0]*Q.shape[1]).flatten()))
-    end_time = timeit.default_timer()
-    print("read_time:", end_time - start_time)
+    read_time = timeit.default_timer() - start_time
+    #print("read_time:", end_time - start_time)
+
 
 
     procs = []
@@ -134,7 +142,7 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000
         proc.join()
 
     beta = X_til_pinv @ (y_v - Gamma_v.T @ np.array(u_arr[:]))
-    return beta
+    return beta, read_time
 
 
 
