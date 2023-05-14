@@ -114,8 +114,6 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     u_arr = Array('f', np.zeros(m))
     grad_arr = Array('f', np.copy(-b))
 
-    n_iter +=1
-    print(n_iter)
     if n_iter >= max_it:
         #raise ValueError("Iterations exceed max_it")
         print("Iterations exceed max_it")
@@ -126,10 +124,10 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     split, mod = divmod(m, processors)
 
     for i in range(processors): 
-        print(i)
         p = Process(target=compute_and_update, args=(u_arr, grad_arr, update_counter, Q, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod)))
         procs.append(p)
         p.start()
+        print(f"new process index {i} starting now")
 
     for proc in procs:
         proc.join()

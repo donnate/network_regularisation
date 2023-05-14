@@ -54,6 +54,8 @@ def project_op(vector, param):
 def compute_and_update(u_array, grad_array, update_vals, Q, epsilon, lambda1, index1, index2): 
     local_u = np.array(u_array[:])
     local_grad = np.array(grad_array[:])
+    print("start sleeping")
+    time.sleep(60)
     while True:
         #print(u_array)
         projected_gradient = local_u - project_op(local_u - local_grad, lambda1)
@@ -64,8 +66,7 @@ def compute_and_update(u_array, grad_array, update_vals, Q, epsilon, lambda1, in
         i = greedy_coord
         #print("greedy coord:" , greedy_coord)
         delta = min(max(local_u[i] - ((1/Q[i,i]) * local_grad[i]), -lambda1), lambda1) - local_u[i]
-        #print("delta:", delta)
-        local_grad += delta*Q[i] #test lock speed here
+        local_grad += delta*Q[i]
         local_u += delta
         grad_array += delta*Q[i] #test lock speed here
         u_array[i] += delta

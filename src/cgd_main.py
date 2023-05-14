@@ -16,16 +16,9 @@ from multiprocessing import Process, Value, Array
 import timeit
 from src.cgd_solver import cgd_solver, primal_dual_preprocessing, cgd_greedy_parallel, cgd_solver_greedy
 
-import time
-
-
-import sys
 import os
 
 os.getcwd()
-
-from src.parallel_fns import print_func, print_func2, test_fn, compute_update, add_one, f, compute_and_update
-#print_func("America")
 
 if __name__ == "__main__":  # confirms that the code is under main function
     #stairs = SmoothStair(n_repeat = 150)
@@ -39,16 +32,10 @@ if __name__ == "__main__":  # confirms that the code is under main function
     probs = [[0.25, 0.05, 0.02], [0.05, 0.35, 0.07], [0.02, 0.07, 0.40]]
     G = nx.powerlaw_cluster_graph(n, m, p)
 
-    barbell = GeneralGraph(G, 60, 70)
+    #barbell = GeneralGraph(G, 60, 70)
+    barbell = BarbellGraph(length_chain = 150, size_clique = 150)
 
     X, y = gaussian_sample(5000, barbell.n_nodes, beta_star = barbell.beta_star, Psi = np.eye(barbell.n_nodes), sigma = 2)
-
-#test.n_nodes
-
-#plt.plot(test.beta_star)
-
-    #barbell = BarbellGraph(length_chain = 50, size_clique = 50)
-    #X, y = gaussian_sample(10000, barbell.n_nodes, beta_star = barbell.beta_star, Psi = np.eye(barbell.n_nodes), sigma = 2)
 
     dual_params = primal_dual_preprocessing(X, y, barbell.incidence, lambda2 = 1)
 
