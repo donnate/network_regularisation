@@ -117,7 +117,7 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000
     update_loops = 0
     prev_u = 0 # For stopping criteria
     max_it = 50000
-    processors = 5 #nprocs #be careful of how many processors to use
+    processors = 10 #nprocs #be careful of how many processors to use
     update_counter = Value('i', 0)
     u_arr = Array('f', np.zeros(m))
     grad_arr = Array('f', np.copy(-b))
