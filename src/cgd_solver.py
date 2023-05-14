@@ -64,8 +64,8 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
     n_iter = 0
     comps = 0
     #print(m)
-    prev_u = 1 # For stopping criteria
-    gradient = -np.copy(Q.dot(np.ones(b.shape[0])-b))
+    prev_u = np.zeros(m) # For stopping criteria
+    gradient = -b
     while True:
         n_iter += 1
         if n_iter >= max_it:
@@ -76,7 +76,7 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
         #projected_gradient = project_op(u - gradient, lambda1)
         greedy_coord = np.argmax(np.abs(projected_gradient))
         i = greedy_coord
-        delta = min(max(u[i] - ((1/Q[i,i]) * -gradient[i]), -lambda1), lambda1) - u[i]
+        delta = min(max(u[i] - ((1/Q[i,i]) * gradient[i]), -lambda1), lambda1) - u[i]
         gradient += delta *Q[i]
         u[i] += delta
         
@@ -110,10 +110,9 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     prev_u = 0 # For stopping criteria
     max_it = 50000
     processors = 5 #nprocs #be careful of how many processors to use
-    eps = 1e-5
     update_counter = Value('i', 0)
     u_arr = Array('f', np.zeros(m))
-    grad_arr = Array('f', -np.copy(b))
+    grad_arr = Array('f', np.copy(-b))
 
     n_iter +=1
     print(n_iter)
@@ -127,6 +126,7 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     split, mod = divmod(m, processors)
 
     for i in range(processors): 
+        print(i)
         p = Process(target=compute_and_update, args=(u_arr, grad_arr, update_counter, Q, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod)))
         procs.append(p)
         p.start()
