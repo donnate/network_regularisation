@@ -49,7 +49,7 @@ if __name__ == "__main__":  # confirms that the code is under main function
 
 
     start_time = timeit.default_timer()
-    beta = cgd_greedy_parallel(dual_params, lambda1 = 5, eps = 1e-4, max_it = 50000)
+    beta = cgd_greedy_parallel(dual_params, lambda1 = 5, eps = 1e-5, max_it = 50000)
     end_time = timeit.default_timer()
 
     start_time2 = timeit.default_timer()
@@ -72,8 +72,6 @@ if __name__ == "__main__":  # confirms that the code is under main function
     print("normed diff normal", la.norm(beta_normal - barbell.beta_star)/np.sqrt(len(beta_normal)))
     print("normed diff parallel", la.norm(beta - barbell.beta_star)/np.sqrt(len(beta)))
     print("normed diff greedy", la.norm(beta_greedy[0] - barbell.beta_star)/np.sqrt(len(beta_greedy[0])))
-
-
 
     fig, ax = plt.subplots()
     ax.plot(beta, label = "Greedy")

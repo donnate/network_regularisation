@@ -103,7 +103,7 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
     return beta, n_iter, comps
 
 
-def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000): 
+def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000): 
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
 
     n_iter = 0
@@ -119,17 +119,13 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     end_time = timeit.default_timer()
     print("read_time:", end_time - start_time)
 
-    if n_iter >= max_it:
-        #raise ValueError("Iterations exceed max_it")
-        print("Iterations exceed max_it")
-        #return (X_til_pinv @ (y_v - Gamma_v.T @ u)), n_iter, update_loops
 
     procs = []
 
     split, mod = divmod(m, processors)
 
     for i in range(processors): 
-        p = Process(target=compute_and_update, args=(u_arr, grad_arr, Q_arr, update_counter, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod)))
+        p = Process(target=compute_and_update, args=(u_arr, grad_arr, Q_arr, update_counter, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod), max_it))
         procs.append(p)
         p.start()
         print(f"new process index {i} starting now")

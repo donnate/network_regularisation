@@ -51,32 +51,25 @@ def project_op(vector, param):
     vector[vector < -param] = -param
     return vector
 
-def compute_and_update(u_array, grad_array, Q, update_vals, epsilon, lambda1, index1, index2): 
-    print("has the fucking thing started yet")
-    #Q = np.array(Qarr).reshape(Qarr.shape[1], Qarr.shape[1]) #local copy of Q
+def compute_and_update(u_array, grad_array, Q, update_vals, epsilon, lambda1, index1, index2, max_it): 
     width_Q = int(np.sqrt(len(Q)))
-    print("wow it's fucking started") 
-    local_u = np.array(u_array[:])
-    local_grad = np.array(grad_array[:])
-
     while True:
-        #print(u_array)
+        
+        local_u = np.array(u_array[:])
+        local_grad = np.array(grad_array[:])
         projected_gradient = local_u - project_op(local_u - local_grad, lambda1)
-        #print(projected_gradient)
-        #print(index1, index2)
-
         greedy_coord = np.argmax(np.abs(projected_gradient[index1:index2])) #projected[grad:]\
         i = greedy_coord
-        #print("greedy coord:" , greedy_coord)
         delta = min(max(local_u[i] - ((1/Q[(i*width_Q) + i]) * local_grad[i]), -lambda1), lambda1) - local_u[i]
-        local_grad += delta*np.array(Q[i*width_Q: (i*width_Q) + width_Q])
-        local_u += delta
         grad_array += delta*np.array(Q[i*width_Q: (i*width_Q) + width_Q]) #test lock speed here
         u_array[i] += delta
         update_vals.value +=1
-        #print("current update number:", update_vals.value)
-        print(delta)
+
+        print(update_vals.value)
         if abs(delta) <= epsilon:
-            print("break reason 1")
+            #print("break reason 1")
             update_vals.value = 0
             break
+        if update_vals.value >= max_it:
+            break
+        
