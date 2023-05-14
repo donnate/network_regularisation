@@ -7,6 +7,8 @@ from multiprocessing import shared_memory, Process, Lock
 from multiprocessing import cpu_count, current_process
 from multiprocessing import Process, Value, Array
 from src.parallel_fns import print_func, print_func2, test_fn, compute_update, add_one, f, compute_and_update
+import time
+import timeit
 
 def primal_dual_preprocessing(X, y, Gamma, lambda2):
     m, p = Gamma.shape
@@ -102,7 +104,6 @@ def cgd_solver_greedy(preprocessed_params, lambda1, eps = 1e-5, max_it = 50000):
 
 
 def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000): 
-
     m, X_til_pinv, Q, b, y_v, Gamma_v = preprocessed_params
 
     n_iter = 0
@@ -113,6 +114,10 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     update_counter = Value('i', 0)
     u_arr = Array('f', np.zeros(m))
     grad_arr = Array('f', np.copy(-b))
+    start_time = timeit.default_timer()
+    Q_arr = Array('f', np.copy(Q.reshape(1, Q.shape[0]*Q.shape[1]).flatten()))
+    end_time = timeit.default_timer()
+    print("read_time:", end_time - start_time)
 
     if n_iter >= max_it:
         #raise ValueError("Iterations exceed max_it")
@@ -124,7 +129,7 @@ def cgd_greedy_parallel(preprocessed_params, lambda1, eps = 1e-4, max_it = 50000
     split, mod = divmod(m, processors)
 
     for i in range(processors): 
-        p = Process(target=compute_and_update, args=(u_arr, grad_arr, update_counter, Q, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod)))
+        p = Process(target=compute_and_update, args=(u_arr, grad_arr, Q_arr, update_counter, eps, lambda1, i*split+min(i, mod), (i+1)*split+min(i+1, mod)))
         procs.append(p)
         p.start()
         print(f"new process index {i} starting now")

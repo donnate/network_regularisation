@@ -33,11 +33,20 @@ if __name__ == "__main__":  # confirms that the code is under main function
     G = nx.powerlaw_cluster_graph(n, m, p)
 
     #barbell = GeneralGraph(G, 60, 70)
-    barbell = BarbellGraph(length_chain = 150, size_clique = 150)
+    barbell = BarbellGraph(length_chain = 80, size_clique = 80)
 
     X, y = gaussian_sample(5000, barbell.n_nodes, beta_star = barbell.beta_star, Psi = np.eye(barbell.n_nodes), sigma = 2)
 
     dual_params = primal_dual_preprocessing(X, y, barbell.incidence, lambda2 = 1)
+
+    '''
+    dual_params[2].shape
+
+    len(dual_params) 
+
+    c = np.random.rand(20000, 20000)
+    dual_params1 = (dual_params[0], dual_params[1], c ,dual_params[3], dual_params[4], dual_params[5])'''
+
 
     start_time = timeit.default_timer()
     beta = cgd_greedy_parallel(dual_params, lambda1 = 5, eps = 1e-4, max_it = 50000)
