@@ -1,7 +1,7 @@
 from lib2to3.pgen2 import grammar
 from math import gamma
 import matplotlib.pyplot as plt
-from simulations.examples import SmoothStair, BarbellGraph, GeneralGraph
+from simulations.examples import SmoothStair, BarbellGraph, GeneralGraph, Smooth2D
 import numpy as np
 import pywt
 from numpy import linalg as la
@@ -22,7 +22,6 @@ import os
 os.getcwd()
 
 if __name__ == "__main__":  # confirms that the code is under main function
-    #stairs = SmoothStair(n_repeat = 150)
     #X, y = gaussian_sample(5000, stairs.n_nodes, beta_star = stairs.beta_star, Psi = stairs.Psi, sigma = 1)
     '''
     n = 200
@@ -34,7 +33,10 @@ if __name__ == "__main__":  # confirms that the code is under main function
     probs = [[0.25, 0.05, 0.02], [0.05, 0.35, 0.07], [0.02, 0.07, 0.40]]
     G = nx.powerlaw_cluster_graph(n, m, p)
     '''
-    params_list = [(70, 70), (100, 100), (133, 133), (167, 167), (200, 200), (233, 233), (267, 267), (300, 300), (333, 334)]
+
+    params_list = [200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    #nx.number_of_nodes(smooth2d.G)
+
     mse_list_normal = []
     mse_list_greedy = []
     mse_list_parallel = []
@@ -45,11 +47,11 @@ if __name__ == "__main__":  # confirms that the code is under main function
     preprocessing_times = []
     
     for params in params_list:
-        barbell = BarbellGraph(*params)
-        barbell.n_nodes
+        barbell = Smooth2D(side_len = int(np.sqrt(params)))
+        #barbell.n_nodes
 
         cov_matrix = cov_from_G(barbell.G, 0.1)
-        p = barbell.n_nodes
+        p = nx.number_of_nodes(barbell.G)
         sigma =1 
 
 
@@ -60,12 +62,12 @@ if __name__ == "__main__":  # confirms that the code is under main function
         gamma_max_cov = np.max(np.linalg.eigh(cov_matrix)[0])
 
 
-        lambda1_opt = 32*sigma*rho_gamma*np.sqrt((gamma_max_cov * np.log(p))/barbell.n_nodes)
+        lambda1_opt = 32*sigma*rho_gamma*np.sqrt((gamma_max_cov * np.log(p))/nx.number_of_nodes(barbell.G))
 
-        lambda2_opt = lambda1_opt/(16 * np.max(barbell.incidence@barbell.beta_star))
+        lambda2_opt = lambda1_opt/(16 * np.max(barbell.incidence@barbell.beta_star.flatten()))
         
 
-        X, y = gaussian_sample(p, barbell.n_nodes, beta_star = barbell.beta_star, Psi = cov_matrix, sigma = sigma)
+        X, y = gaussian_sample(p, nx.number_of_nodes(barbell.G), beta_star = barbell.beta_star.flatten(), Psi = cov_matrix, sigma = sigma)
 
         start_time4 = timeit.default_timer()
         dual_params = primal_dual_preprocessing(X, y, barbell.incidence, lambda2 = lambda2_opt)
@@ -76,19 +78,19 @@ if __name__ == "__main__":  # confirms that the code is under main function
         start_time2 = timeit.default_timer()
         beta_normal = cgd_solver(dual_params, lambda1 = lambda1_opt)
         end_time2 = timeit.default_timer()
-        mse_list_normal.append(la.norm(beta_normal - barbell.beta_star)/np.sqrt(len(beta_normal)))
+        mse_list_normal.append(la.norm(beta_normal - barbell.beta_star.flatten())/np.sqrt(len(beta_normal)))
         runtimes_normal.append(end_time2 - start_time2)
 
         start_time3 = timeit.default_timer()
         beta_greedy = cgd_solver_greedy(dual_params, lambda1 = lambda1_opt)
         end_time3 = timeit.default_timer()
-        mse_list_greedy.append(la.norm(beta_greedy[0] - barbell.beta_star)/np.sqrt(len(beta_greedy[0])))
+        mse_list_greedy.append(la.norm(beta_greedy[0] - barbell.beta_star.flatten())/np.sqrt(len(beta_greedy[0])))
         runtimes_greedy.append(end_time3 - start_time3)
 
         start_time = timeit.default_timer()
         beta, read_time = cgd_greedy_parallel(dual_params, lambda1 = lambda1_opt, eps = 1e-5)
         end_time = timeit.default_timer()
-        mse_list_parallel.append(la.norm(beta - barbell.beta_star)/np.sqrt(len(beta)))
+        mse_list_parallel.append(la.norm(beta - barbell.beta_star.flatten())/np.sqrt(len(beta)))
         read_times_parallel.append(read_time)
         runtimes_parallel.append(end_time - start_time)
 
