@@ -1,3 +1,4 @@
+from threading import local
 import numpy as np
 from multiprocessing import shared_memory, Process, Lock
 import time
@@ -50,19 +51,23 @@ def project_op(vector, param):
     vector[vector < -param] = -param
     return vector
 
-def compute_and_update(u_array, grad_array, update_vals, Q, epsilon, lambda1, index1, index2): 
+def compute_and_update(u_array, grad_array, Q, update_vals, epsilon, lambda1, index1, index2, max_it): 
+    width_Q = int(np.sqrt(len(Q)))
     while True:
-        print(u_array)
+        
         local_u = np.array(u_array[:])
         local_grad = np.array(grad_array[:])
         projected_gradient = local_u - project_op(local_u - local_grad, lambda1)
-        greedy_coord = np.argmax(np.abs(local_grad[index1:index2])) #projected[grad:]\
+        greedy_coord = np.argmax(np.abs(projected_gradient[index1:index2])) #projected[grad:]\
         i = greedy_coord
-        delta = min(max(local_u[i] - ((1/Q[i,i]) * -local_grad[i]), -lambda1), lambda1) - local_u[i]
-        grad_array += delta*Q[i] #test lock speed here
+        delta = min(max(local_u[i] - ((1/Q[(i*width_Q) + i]) * local_grad[i]), -lambda1), lambda1) - local_u[i]
+        grad_array += delta*np.array(Q[i*width_Q: (i*width_Q) + width_Q]) #test lock speed here
         u_array[i] += delta
         update_vals.value +=1
-
-        if delta <= epsilon:
-            print("break reason 1")
+        if abs(delta) <= epsilon:
+            #print("break reason 1")
+            update_vals.value = 0
             break
+        if update_vals.value >= max_it:
+            break
+        
