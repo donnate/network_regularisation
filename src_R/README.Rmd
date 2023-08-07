@@ -1,0 +1,25 @@
+---
+title: "README"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installation
+
+## Example
+
+## Dependencies
+
+This package requires the following packages:
+- caret
+- pracma
+- roperators
+- MASS
+- tidyverse
+- cvxr
+- roxygen2
+- gear
+- RGCCA

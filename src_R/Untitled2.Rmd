@@ -69,20 +69,11 @@ genglm <- function(formula = NULL, data = NULL, x = NULL, y = NULL,
                    solver = c("ECOS", "IP", "ADMM", "CD"),
                    intercept = TRUE){
 
-  # if(!is.null(formula) & !is.null(data)){
-  #   vars = all.vars(formula)
-  #   response = vars[1]
-  #   predictors = vars[-1]
-  #   x = as.matrix(data[predictors])
-  #   y = as.matrix(data[response])
-  # }
-  
   if(!is.null(formula) & !is.null(data)){
     vars = all.vars(formula)
     response = vars[1]
     predictors = vars[-1]
-    design_matrix = model.matrix(formula,data)
-    x = as.matrix(design_matrix[,-1])
+    x = as.matrix(data[predictors])
     y = as.matrix(data[response])
   }
   
@@ -141,7 +132,7 @@ genglm <- function(formula = NULL, data = NULL, x = NULL, y = NULL,
 
 ```{r}
 data = cbind(data.frame(X),data.frame(y))
-model = genglm(formula=y~I(X1^2)+X2, data=data, D=D[c(1,2),c(1,2)],family='gaussian',solver='CD')
+model = genglm(formula=y~X1+X2, data=data, D=D[c(1,2),c(1,2)],family='gaussian',solver='CD')
 ```
 
 
@@ -206,7 +197,7 @@ coef.genglm <- function(object){
 #helper functions for vectorized.cv.genglm
 
 # returns mean squared error for one fold 
-folds_cv = function(fold, x, y, D, family, l1, l2, solver, type.measure){
+folds_cv = function(fold, x, y, D, family, l1, l2, solver){
   train_x = x[-unlist(fold),]
   test_x = x[unlist(fold),]
   
@@ -215,26 +206,15 @@ folds_cv = function(fold, x, y, D, family, l1, l2, solver, type.measure){
   
   model = genglm(x=train_x,y=train_y,D=D,family=family,lambda1=l1,lambda2=l2,solver=solver)
   fitted_y = predict.genglm(model, test_x,type="response")
-  n = nrow(test_x)
-  
-  if(type.measure == 'mean_squared_error'){
-    fold_score = mean((test_y-fitted_y)^2)
-  }
-  else if(type.measure == 'deviance' & family == 'binomial'){
-    #deviance
-    fold_score = (-2/n)*sum(test_y*log(fitted_y/(1-fitted_y)) + log(1-fitted_y))
-  }
-  else if(type.measure == 'deviance' & family == 'poisson'){
-    fold_score = (-2/n)*sum(test_y*log(test_y/fitted_y) - (test_y-fitted_y))
-  }
+  fold_score = mean((test_y-fitted_y)^2)
   return(fold_score)
 }
 
 # returns average mean squared error across folds for one lambda1 & lambda2 combination
-param_cv = function(lambda_row, x, y, D, folds, family, solver,type.measure){
+param_cv = function(lambda_row, x, y, D, folds, family, solver){
   l1 = lambda_row[1]
   l2 = lambda_row[2]
-  param_score = mean(unlist(lapply(folds, folds_cv, x=x, y=y, D=D, family=family, solver=solver, l1=l1, l2=l2,type.measure=type.measure)))
+  param_score = mean(unlist(lapply(folds, folds_cv, x=x, y=y, D=D, family=family, solver=solver, l1=l1, l2=l2)))
   return(param_score)
 }
 ```
@@ -249,20 +229,11 @@ vectorized.cv.genglm = function(formula = NULL, data = NULL, x = NULL, y = NULL,
                       lambda1 = 10^seq(-3,2,1), lambda2 = 10^seq(-3,2,1),
                       n_folds=2){
   
-  # if(!is.null(formula) & !is.null(data)){
-  #   vars = all.vars(formula)
-  #   response = vars[1]
-  #   predictors = vars[-1]
-  #   x = as.matrix(data[predictors])
-  #   y = as.matrix(data[response])
-  # }
-  
   if(!is.null(formula) & !is.null(data)){
     vars = all.vars(formula)
     response = vars[1]
     predictors = vars[-1]
-    design_matrix = model.matrix(formula,data)
-    x = as.matrix(design_matrix[,-1])
+    x = as.matrix(data[predictors])
     y = as.matrix(data[response])
   }
   
@@ -271,7 +242,7 @@ vectorized.cv.genglm = function(formula = NULL, data = NULL, x = NULL, y = NULL,
   
   lambdas = expand.grid(lambda1,lambda2)
   colnames(lambdas) = c('l1','l2')
-  cv_scores = apply(lambdas, 1, param_cv, x=x,y=y,D=D,folds,family=family,solver=solver,type.measure=type.measure)
+  cv_scores = apply(lambdas, 1, param_cv, x=x,y=y,D=D,folds,family=family,solver=solver)
   
   lambda1.min = lambdas[which.min(cv_scores),]$l1
   lambda2.min = lambdas[which.min(cv_scores),]$l2
@@ -301,7 +272,7 @@ summary.genglm = function(object){
 ```
 
 ```{r}
-cv.model = vectorized.cv.genglm(formula=y~X1+X2, data=data,type.measure='mean_squared_error', D=D[c(1,2),c(1,2)],family='gaussian',solver='CD')
+cv.model = vectorized.cv.genglm(formula=y~X1+X2, data=data, D=D[c(1,2),c(1,2)],family='gaussian',solver='CD')
 ```
 
 ```{r}
@@ -362,11 +333,6 @@ cv.genglm <- function(x,
 }
 ```
 
-```{r}
-data = cbind(data.frame(X),data.frame(y))
-formula = y ~ X1^2
-design_matrix <- model.matrix(formula, data)
-```
 
 
 
